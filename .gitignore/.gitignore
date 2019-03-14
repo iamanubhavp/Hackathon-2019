@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Mar 12 19:50:28 2019
+
+@author: szaminda
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar  7 18:44:56 2019
+
+@author: szaminda
+"""
+
+import pandas as pd
+
+Add_asset_list= []
+dict1 = {'Product Description': 'Temp FI Asset','Asset Class': 'Fixed Income','Ticker':'ABC','50-50 Qualified': 4}
+dict2 =  {'Product Description': 'Temp equity Asset','Asset Class': 'Equity','Ticker':'XYZ','50-50 Qualified': 1}
+
+Add_asset_list.append(dict1)
+Add_asset_list.append(dict2)
+
+
+def add_scale_fi(dfi):
+    for item in Add_asset_list:
+        if (item['Asset Class']  == 'Fixed Income'):
+            temp  = pd.DataFrame([item])
+            print (temp)
+            dfi = pd.concat([dfi,temp],axis=0).reset_index()
+#            print (dfi)
+    return dfi
+
+
+def add_scale_equity(dfe):
+    for item in Add_asset_list:
+        if (item['Asset Class']  == 'Equity'):
+            temp  = pd.DataFrame([item])
+            print (temp)
+            dfe = pd.concat([dfe,temp],axis=0).reset_index()
+    return dfe 
+
+
+def addl_count_fi(Add_asset_list):
+    sum_fi=0
+    for j in Add_asset_list:
+        if (j['Asset Class'] == 'Fixed Income' ):
+            sum_fi = sum_fi + j['50-50 Qualified']
+    return sum_fi
+
+
+def addl_count_equity(Add_asset_list):
+    sum_equity=0
+    for j in Add_asset_list:
+        if (j['Asset Class'] == 'Equity' ):
+            sum_equity = sum_equity + j['50-50 Qualified']
+    return sum_equity
+
+
+def scalepf(equity_ratio,fi_ratio):
+    
+    const_list= ['Allocation','Cash']
+    portf = pd.read_excel('H:\\My Documents\\comp\\Copy of Case study.xlsm')
+    portf_equity = portf[portf['Asset Class'] == 'Equity'].dropna()
+    portf_fi = portf.loc[portf['Asset Class'] == 'Fixed Income'].dropna()
+    port_const = portf[portf['Asset Class'].isin(const_list) ].dropna()
+    
+    const_wt = port_const['50-50 Qualified'].sum()
+
+    fi_rows = portf_fi.shape[0]
+    equity_rows = portf_equity.shape[0]
+    Curr_equity_wt = portf_equity['50-50 Qualified'].sum()
+    curr_fi_wt = portf_fi['50-50 Qualified'].sum()
+    print ("Curetn wight equity  %d  " , Curr_equity_wt )
+    print ("Cureent wight fi %d", curr_fi_wt)
+    
+#    Curr_equity_wt = 93-(100-(portf_equity['50-50 Qualified'].sum()))
+#    curr_fi_wt = 93-(100-(portf_fi['50-50 Qualified'].sum() ))
+    
+    sum_fi= addl_count_fi(Add_asset_list)
+    sum_equity= addl_count_equity(Add_asset_list)
+    
+    equity_scale_wt = 1+ (equity_ratio - (Curr_equity_wt+ const_wt+sum_equity))/100
+    fi_scale_wt = 1+ (fi_ratio - (curr_fi_wt + const_wt+sum_fi))/100
+    print ("equity  %d", equity_scale_wt )
+    print ("fi %d",fi_scale_wt )
+    print ("Curetn wight equity  %d  " , Curr_equity_wt )
+    print ("Cureent wight fi %d", curr_fi_wt)
+
+
+
+
+    portf_equity['50-50 Qualified']= portf_equity['50-50 Qualified'].apply(lambda x:(x*equity_scale_wt))
+    portf_fi['50-50 Qualified']=portf_fi['50-50 Qualified'].apply(lambda x: (x*fi_scale_wt))
+    portf_fi = add_scale_fi(portf_fi)
+    portf_equity= add_scale_equity(portf_equity)
+#    print (portf_equity)
+#    print (portf_fi)
+
+    portf_equity.append([portf_fi,port_const]).to_csv("C:\\projects\\bca.csv")
+    fin_port = portf_equity.append([portf_fi,port_const])
+    print(fin_port['50-50 Qualified'].sum())
+
+scalepf(40,60)
